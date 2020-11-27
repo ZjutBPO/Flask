@@ -12,6 +12,24 @@ bp = Blueprint('mark',__name__)
 def index():
     return render_template('index.html')
 
+@bp.route('/MarkBaseStation.do',methods=('GET','Post'))
+def MarkBaseStation():
+    db = get_db()
+    cursor = db.cursor()
+    sql = "Select longitude,latitude from basestation"
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    array = {}
+    index = 0
+    for item in results:
+        tmp = {}
+        tmp['longitude'] = item[0]
+        tmp['latitude'] = item[1]
+        array[index] = tmp
+        index += 1
+    
+    return jsonify(array)
+
 @bp.route('/UseDBScan.do',methods=('GET','Post'))
 def UseDBScan():
     db = get_db()

@@ -1,25 +1,18 @@
-function Mark(imsi) {
+var UserMarker = [],map,BaseStation = [],ShowBaseStation = 0;
+
+function MarkUser(imsi) {
     $.ajax({
         type: "post",
         data: "imsi=" + imsi,
         url: "/UseDBScan.do",
         dataType: "json",
         success: function (result) {
-            console.log(result)
+            // console.log(result);
+            
             let jsondata = result;
 
-            var map = new AMap.Map('container', {
-                zoom: 15, //级别
-                center: [jsondata[0].longitude, jsondata[0].latitude]
-            });
-
-            // 右击可以获取鼠标所在的经纬度
-            var clickHandler = function(e) {
-                alert('您在[ ' + e.lnglat.getLng() + ',' + e.lnglat.getLat() + ' ]的位置点击了地图！');
-            };
-
-            // 绑定事件
-            map.on('rightclick', clickHandler);
+            map.setZoom(15);
+            map.setCenter([jsondata[0].longitude,jsondata[0].latitude]);
 
             let MarkerTime = {},MarkerLabel = {};
             // MarkerList为按照时间排序的点。
@@ -36,17 +29,22 @@ function Mark(imsi) {
                 MarkerLabel[String(jsondata[index].longitude) + "-" + String(jsondata[index].latitude)] += jsondata[index].label + '  ';
             }
 
+            map.remove(UserMarker);
+            UserMarker = [];
+            // console.log(UserMarker);
+
             // 在地图上标注点，旁边写获得信号的时间
             for (let key in MarkerTime) {
                 let tmp = key.split('-');
-                map.add(new AMap.Marker({
+                UserMarker[key] = new AMap.Marker({
                     position: [tmp[0], tmp[1]],
                     content: '<div>\
                                 <div class="icon"></div>\
                                 <div class = "TimeBlock">' + MarkerTime[key] + '</div>\
                                 <div class = "ClusterBlock">' + MarkerLabel[key] + '</div>\
                             </div>'
-                }))
+                });
+                map.add(UserMarker[key]);
             }
 
             // 按照时间顺序，将各个点连接起来
@@ -60,12 +58,42 @@ function Mark(imsi) {
     })
 }
 
+function MarkBaseStation(){
+    $.ajax({
+        type:"post",
+        url:"/MarkBaseStation.do",
+        dataType:"json",
+        success:function (result) {
+            for (let key in result) {
+                BaseStation[key] = new AMap.Marker({
+                    position: [result[key].longitude, result[key].latitude],
+                    content: '<div class="BaseStationIcon"></div>'
+                });
+            }
+        }
+    })
+}
+
 $(document).ready(function() {
-    Mark('460000095007329090');
+    map = new AMap.Map('container', {
+        zoom: 12, //级别
+        center: [ 123.458225,41.844066 ]
+    });
+    
+    // 右击可以获取鼠标所在的经纬度
+    var clickHandler = function(e) {
+        alert('您在[ ' + e.lnglat.getLng() + ',' + e.lnglat.getLat() + ' ]的位置点击了地图！');
+    };
+    
+    // 绑定事件
+    map.on('rightclick', clickHandler);
+
+    MarkBaseStation();
+    MarkUser('460000095007329090');
     $("#imsi").val('460000095007329090');
     
     $("#imsi").change(function() {
-            Mark($("#imsi").val());
+        MarkUser($("#imsi").val());
     });
 
     $("#imsi").focus(function() {
@@ -80,5 +108,16 @@ $(document).ready(function() {
     $("#ControlClusterBlock").click(function () {
         if ($(".ClusterBlock").css("display") == "none") $(".ClusterBlock").css("display", "block");
         else $(".ClusterBlock").css("display", "none");
+    })
+
+    $("#ControlBaseStationIcon").click(function () {
+        if (ShowBaseStation == 0){
+            map.add(BaseStation);
+            ShowBaseStation = 1;
+        }
+        else{
+            ShowBaseStation = 0;
+            map.remove(BaseStation);
+        }
     })
 })
