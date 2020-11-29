@@ -1,4 +1,4 @@
-var UserMarker = [],map,BaseStation = [],ShowBaseStation = 0;
+var UserMarker = [],map,BaseStation = [],ShowBaseStation = 0,polyline;
 
 function MarkUser(imsi) {
     $.ajax({
@@ -29,30 +29,36 @@ function MarkUser(imsi) {
                 MarkerLabel[String(jsondata[index].longitude) + "-" + String(jsondata[index].latitude)] += jsondata[index].label + '  ';
             }
 
-            map.remove(UserMarker);
-            UserMarker = [];
+            if (typeof(polyline) != "undefined")
+            {
+                map.remove(UserMarker);
+                map.remove(polyline);
+                UserMarker = [];
+            }
+
             // console.log(UserMarker);
 
             // 在地图上标注点，旁边写获得信号的时间
+            let index = 0;
             for (let key in MarkerTime) {
                 let tmp = key.split('-');
-                UserMarker[key] = new AMap.Marker({
+                UserMarker[index++] = new AMap.Marker({
                     position: [tmp[0], tmp[1]],
-                    content: '<div>\
-                                <div class="icon"></div>\
-                                <div class = "TimeBlock">' + MarkerTime[key] + '</div>\
-                                <div class = "ClusterBlock">' + MarkerLabel[key] + '</div>\
-                            </div>'
+                    content: '<div>' +
+                                '<div class="icon"></div>'+
+                                '<div class = "TimeBlock">' + MarkerTime[key] + '</div>'+
+                                '<div class = "ClusterBlock">' + MarkerLabel[key] + '</div>'+
+                            '</div>'
                 });
-                map.add(UserMarker[key]);
             }
 
             // 按照时间顺序，将各个点连接起来
-            let polyline = new AMap.Polyline({
+            polyline = new AMap.Polyline({
                 path: MarkerList,
                 showDir: true
             });
 
+            map.add(UserMarker);
             map.add(polyline);
         }
     })

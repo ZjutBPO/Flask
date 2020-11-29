@@ -4,6 +4,7 @@ from werkzeug.exceptions import abort
 from flaskr.MysqlDB import get_db
 from flask.json import jsonify
 from sklearn.cluster import DBSCAN
+from sklearn.cluster import OPTICS
 import numpy as np
 
 bp = Blueprint('mark',__name__)
