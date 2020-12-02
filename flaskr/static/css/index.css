@@ -21,8 +21,12 @@ body {
     background-color: rgba(255, 255, 255, 0.8);
 }
 
-.ClusterBlock{
-    background-color: rgba(255, 255, 255, 0.8);
+.DBSCAN{
+    background-color: rgba(70, 255, 126, 0.8);
+}
+
+.OPTICS{
+    background-color: rgba(68, 98, 163, 0.5);
 }
 
 #QueryBar {

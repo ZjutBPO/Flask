@@ -4,7 +4,6 @@ python版本3.6.4
 |所需包|版本|
 |--|--|
 |Flask|1.1.2|
-|tensorflow-gpu|1.14.0|
 |numpy|1.19.4|
 |matplotlib|3.2.1|
 |pandas|1.0.4|
@@ -12,9 +11,6 @@ python版本3.6.4
 |st-dbscan|0.1.4|
 |mysqlclient|2.0.1|
 |st_optics|0.0.1|
-tensorflow-gpu可以换成tensorflow，版本都是1.14.0
-使用gpu需要安装CUDA和CUDNN。
-安装CUDA和CUDNN时注意 驱动版本、显卡性能、CUDA版本、CDUNN版本。网上有对应的版本，建议查阅后分享到群里节省查阅时间。(可能也有不安装CUDA和CUDNN就可以运行的方法？)
 
 使用freeze给所有模块搬家
 ```
@@ -27,6 +23,5 @@ pip freeze > e:\my_freeze.txt
 # 在另一个环境下，安装该文档里的模块
 pip install -r my_freeze.txt
 ```
-注意改`tensorflow-gpu==1.14.0`为`tensorflow==1.14.0`
 安装使用豆瓣源
 pip install (要安装的文件名) -i http://pypi.douban.com/simple --trusted-host pypi.douban.com

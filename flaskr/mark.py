@@ -3,8 +3,9 @@ from werkzeug.exceptions import abort
 
 from flaskr.MysqlDB import get_db
 from flask.json import jsonify
-from sklearn.cluster import DBSCAN
-from sklearn.cluster import OPTICS
+from math import radians, cos, sin, asin, sqrt
+from sklearn.cluster import DBSCAN,OPTICS,cluster_optics_dbscan
+from st_dbscan import ST_DBSCAN
 import numpy as np
 
 bp = Blueprint('mark',__name__)
@@ -31,7 +32,7 @@ def MarkBaseStation():
     
     return jsonify(array)
 
-@bp.route('/UseDBScan.do',methods=('GET','Post'))
+@bp.route('/UseCluster.do',methods=('GET','Post'))
 def UseDBScan():
     db = get_db()
     cursor = db.cursor()
@@ -40,12 +41,33 @@ def UseDBScan():
     results = cursor.fetchall()
 
     data = np.array(results)
-    data[:,1] = data[:,1] * 100000
-    data[:,2] = data[:,2] * 111320
 
-    db = DBSCAN(eps = 500,min_samples=5).fit(data[:,1:3])
+    #公式计算两点间距离（m）
+    def distance(p1,p2):
+        #lng1,lat1,lng2,lat2 = (120.12802999999997,30.28708,115.86572000000001,28.7427)
+        lng1, lat1, lng2, lat2 = map(radians, [float(p1[0]), float(p1[1]), float(p2[0]), float(p2[1])]) # 经纬度转换成弧度
+        dlon=lng2 - lng1
+        dlat=lat2 - lat1
+        a=sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        distance=2*asin(sqrt(a))*6378.137 * 1000 # 地球平均半径，6371km
+        return distance
 
-    results = np.c_[np.array(results),db.labels_].tolist()
+    dbscan_cluster = DBSCAN(eps = 500,
+                    min_samples=5,
+                    metric=lambda a,b:distance(a,b)).fit(data[:,1:3])
+
+    optics_cluster = OPTICS(min_samples=5,cluster_method='dbscan',metric=lambda a,b:distance(a,b)).fit(data[:,1:3])
+
+    print(optics_cluster.reachability_)
+
+    optics_label = cluster_optics_dbscan( reachability=optics_cluster.reachability_,
+                                    core_distances=optics_cluster.core_distances_,
+                                    ordering=optics_cluster.ordering_,
+                                    eps=300)
+
+    print(optics_label)
+
+    results = np.c_[np.array(results),dbscan_cluster.labels_,optics_label].tolist()
 
     array = {}
     index = 0
@@ -54,7 +76,8 @@ def UseDBScan():
         tmp['time'] = item[0]
         tmp['longitude'] = item[1]
         tmp['latitude'] = item[2]
-        tmp['label'] = item[3]
+        tmp['dbscan'] = item[3]
+        tmp['optics'] = item[4]
         array[index] = tmp
         index += 1
 

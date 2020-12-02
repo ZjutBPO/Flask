@@ -4,7 +4,7 @@ function MarkUser(imsi) {
     $.ajax({
         type: "post",
         data: "imsi=" + imsi,
-        url: "/UseDBScan.do",
+        url: "/UseCluster.do",
         dataType: "json",
         success: function (result) {
             // console.log(result);
@@ -14,19 +14,22 @@ function MarkUser(imsi) {
             map.setZoom(15);
             map.setCenter([jsondata[0].longitude,jsondata[0].latitude]);
 
-            let MarkerTime = {},MarkerLabel = {};
+            let MarkerTime = {},DBSCAN = {},OPTICS = {};
             // MarkerList为按照时间排序的点。
             let MarkerList = [];
 
             for (let index in jsondata) {
                 MarkerList[index] = [jsondata[index].longitude, jsondata[index].latitude];
-                if (typeof(MarkerTime[String(jsondata[index].longitude) + "-" + String(jsondata[index].latitude)]) == "undefined")
+                let key = String(jsondata[index].longitude) + "-" + String(jsondata[index].latitude);
+                if (typeof(MarkerTime[key]) == "undefined")
                 {
-                    MarkerTime[String(jsondata[index].longitude) + "-" + String(jsondata[index].latitude)] = "";
-                    MarkerLabel[String(jsondata[index].longitude) + "-" + String(jsondata[index].latitude)] = "";
+                    MarkerTime[key] = "";
+                    DBSCAN[key] = "";
+                    OPTICS[key] = "";
                 }
-                MarkerTime[String(jsondata[index].longitude) + "-" + String(jsondata[index].latitude)] += jsondata[index].time.substring(17, 25) + '  ';
-                MarkerLabel[String(jsondata[index].longitude) + "-" + String(jsondata[index].latitude)] += jsondata[index].label + '  ';
+                MarkerTime[key] += jsondata[index].time.substring(17, 25) + '  ';
+                DBSCAN[key] += jsondata[index].dbscan + '  ';
+                OPTICS[key] += jsondata[index].optics + '  ';
             }
 
             if (typeof(polyline) != "undefined")
@@ -41,13 +44,14 @@ function MarkUser(imsi) {
             // 在地图上标注点，旁边写获得信号的时间
             let index = 0;
             for (let key in MarkerTime) {
-                let tmp = key.split('-');
+                let p = key.split('-');
                 UserMarker[index++] = new AMap.Marker({
-                    position: [tmp[0], tmp[1]],
+                    position: [p[0], p[1]],
                     content: '<div>' +
                                 '<div class="icon"></div>'+
                                 '<div class = "TimeBlock">' + MarkerTime[key] + '</div>'+
-                                '<div class = "ClusterBlock">' + MarkerLabel[key] + '</div>'+
+                                '<div class = "DBSCAN">' + DBSCAN[key] + '</div>'+
+                                '<div class = "OPTICS">' + OPTICS[key] + '</div>'+
                             '</div>'
                 });
             }
@@ -111,10 +115,16 @@ $(document).ready(function() {
         else $(".TimeBlock").css("display", "none");
     })
 
-    $("#ControlClusterBlock").click(function () {
-        if ($(".ClusterBlock").css("display") == "none") $(".ClusterBlock").css("display", "block");
-        else $(".ClusterBlock").css("display", "none");
+    $("#ControlDBSCAN").click(function () {
+        if ($(".DBSCAN").css("display") == "none") $(".DBSCAN").css("display", "block");
+        else $(".DBSCAN").css("display", "none");
     })
+
+    $("#ControlOPTICS").click(function () {
+        if ($(".OPTICS").css("display") == "none") $(".OPTICS").css("display", "block");
+        else $(".OPTICS").css("display", "none");
+    })
+
 
     $("#ControlBaseStationIcon").click(function () {
         if (ShowBaseStation == 0){
